@@ -1,11 +1,10 @@
-// pages/sat/SatPositionTile.cpp
 #include "SatPositionTile.h"
+#include "Sat.h"
 #include "SatTracker.h"
 #include "SatLocationTile.h"
 #include "SatTimeUtils.h"
-#include "../KeyValue.h"
-#include "../htmlHeaders.h"
-#include "../htmlMessages.h"
+
+// Resto igual...
 
 void satPositionTile(String &data)
 {
@@ -129,33 +128,28 @@ void satPositionTileAjax(String &data)
 
     SatPosition pos = satTracker.computePosition(lat, lon, 0, now);
 
-    // Nombre
     data.concat("sat_name_display|" + String(satTracker.getSatelliteName()) + "\n");
 
-    // Estado
+
     String statusClass, statusText;
     if (pos.elevation > 10) { statusClass="sat-status-visible"; statusText="VISIBLE"; }
     else if (pos.elevation > 0) { statusClass="sat-status-low"; statusText="LOW HORIZON"; }
     else { statusClass="sat-status-below"; statusText="BELOW HORIZON"; }
     data.concat("sat_status_display|<div class='" + statusClass + "'>" + statusText + "</div>\n");
 
-    // NORAD → solo nombre
     data.concat("norad_id|" + String(satTracker.getSatelliteName()) + "\n");
 
-    // ======= HORA LOCAL REAL =======
     int y, m, d, hh, mm, ss;
     getLocalTimeFromUnix(now, y, m, d, hh, mm, ss);
     char localBuf[32];
     snprintf(localBuf, sizeof(localBuf), "%04d/%02d/%02d %02d:%02d:%02d", y, m, d, hh, mm, ss);
     data.concat("local_time|" + String(localBuf) + "\n");
 
-    // ======= UTC REAL =======
     getUTCFromUnix(now, y, m, d, hh, mm, ss);
     char utcBuf[32];
     snprintf(utcBuf, sizeof(utcBuf), "%04d/%02d/%02d %02d:%02d:%02d", y, m, d, hh, mm, ss);
     data.concat("sat_utc|" + String(utcBuf) + "\n");
 
-    // Datos básicos
     data.concat("gp_lat|" + String(pos.lat, 6) + "°\n");
     data.concat("gp_lon|" + String(pos.lon, 6) + "°\n");
     data.concat("sat_alt|" + String(pos.altitude, 2) + " km\n");
@@ -163,7 +157,6 @@ void satPositionTileAjax(String &data)
     data.concat("sat_az|" + String(pos.azimuth, 2) + "°\n");
     data.concat("sat_el|" + String(pos.elevation, 2) + "°\n");
 
-    // RA/DEC
     int ra_h = (int)pos.ra;
     int ra_m = (int)((pos.ra - ra_h) * 60);
     int ra_s = (int)(((pos.ra - ra_h) * 60 - ra_m) * 60);
@@ -176,7 +169,6 @@ void satPositionTileAjax(String &data)
     String dec_str = (pos.dec < 0 ? "-" : "") + String(dec_d) + "° " + String(dec_m) + "' " + String(dec_s) + "\"";
     data.concat("sat_dec|" + dec_str + "\n");
 
-    // LST
     String lst_str="---";
     if (pos.lst > 0 && pos.lst < 24) {
         int lst_h=(int)pos.lst;
@@ -186,11 +178,9 @@ void satPositionTileAjax(String &data)
     }
     data.concat("lst|" + lst_str + "\n");
 
-    // Periodo
     if (pos.period > 0) data.concat("period|" + String(pos.period, 0) + " min\n");
     else data.concat("period|---\n");
 
-    // --- Cálculo preciso del próximo pase ---
     int nextPassStart = -1;
     double nextPassMaxEl = -90;
     bool inPass = false;
@@ -226,6 +216,5 @@ void satPositionTileAjax(String &data)
         data.concat("next_pass|>24 hours\n");
     }
 
-    // Max elev actual
     data.concat("max_el|" + String(pos.elevation, 1) + "°\n");
 }

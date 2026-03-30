@@ -1,11 +1,10 @@
-// pages/sat/SatControlTile.cpp
+// plugins/satellite/SatelliteCatalog.cpp
 #include "SatControlTile.h"
+#include "Sat.h"
 #include "SatLocationTile.h"
 #include "SatTracker.h"
 #include "SatTimeUtils.h"
 #include "SatelliteCatalog.h"
-#include "../htmlHeaders.h"
-#include "../htmlMessages.h"
 
 bool trackingActive = false;
 static unsigned long lastTrackingUpdate = 0;
@@ -229,7 +228,6 @@ void satControlTileAjax(String &data)
                 data.concat("track_progress|\n");
             }
             
-            // Mensajes de advertencia
             if (pos.elevation <= 0) {
                 data.concat("track_warning| Satellite below horizon. Cannot track.\n");
                 data.concat("sat_status| Bajo horizonte\n");
@@ -241,7 +239,6 @@ void satControlTileAjax(String &data)
                 data.concat("sat_status| ✓ Visible\n");
             }
             
-            // Next pass prediction
             if (pos.elevation <= 0) {
                 int nextPass = -1;
                 for (int t = 5; t <= 180; t += 5) {

@@ -1,14 +1,16 @@
-// pages/sat/Sat.cpp
-#include "SatTimeUtils.h"
+// plugins/satellite/Sat.cpp
 #include "Sat.h"
-#include "../Page.h"
-#include "../Pages.common.h"
-#include "../KeyValue.h"
+#include "SatTimeUtils.h"
 #include "SatTracker.h"
 #include "SatLocationTile.h"
 #include "SatPositionTile.h"
 #include "SatControlTile.h"
 #include "SatelliteCatalog.h"
+
+void pageHeader(const char* page) {
+    String data = "<div class='header'><h1 style='color:#88ccff;'>Satellite Tracker</h1></div>";
+    www.sendContentAndClear(data);
+}
 
 void processSatGet();
 void satControlTileLoop();
@@ -42,7 +44,7 @@ void handleSat()
 
     data.concat(FPSTR(html_body_begin));
     www.sendContentAndClear(data);
-    pageHeader(PAGE_SAT);
+    pageHeader("sat");
     data.concat(FPSTR(html_onstep_page_begin));
 
     if (!status.onStepFound) {
@@ -167,54 +169,48 @@ void satAjax()
                return;
             }
     
-        SatPosition pos = satTracker.computePosition(lat, lon, 0, now);
+            SatPosition pos = satTracker.computePosition(lat, lon, 0, now);
     
-        if (pos.valid) {
-           if (pos.elevation <= 0) {
-               data = "WARNING: Satellite below horizon (EL=" + String(pos.elevation, 1) + "°). Cannot point.";
-               www.sendContentAndClear(data);
-               www.sendContent("");
-               return;
+            if (pos.valid) {
+               if (pos.elevation <= 0) {
+                   data = "WARNING: Satellite below horizon (EL=" + String(pos.elevation, 1) + "°). Cannot point.";
+                   www.sendContentAndClear(data);
+                   www.sendContent("");
+                   return;
+                }
+            
+                int raH = (int)pos.ra;
+                int raM = (int)((pos.ra - raH) * 60);
+                int raS = (int)(((pos.ra - raH) * 60 - raM) * 60);
+            
+                double decAbs = fabs(pos.dec);
+                int decD = (int)decAbs;
+                int decM = (int)((decAbs - decD) * 60);
+                int decS = (int)(((decAbs - decD) * 60 - decM) * 60);
+                char decSign = (pos.dec >= 0) ? '+' : '-';
+            
+                char cmdRA[30], cmdDec[30];
+                sprintf(cmdRA, ":Sr %02d:%02d:%02d#", raH, raM, raS);
+                sprintf(cmdDec, ":Sd %c%02d:%02d:%02d#", decSign, decD, decM, decS);
+            
+                char response[80];
+                
+                onStep.command(cmdRA, response);
+                delay(100);
+                
+                onStep.command(cmdDec, response);
+                delay(100);
+                
+                onStep.command(":MS#", response);
+                
+                data = "GOTO: RA=" + String(raH) + "h" + String(raM) + "m" + String(raS) + "s, DEC=" + String(decSign) + String(decD) + "°" + String(decM) + "'" + String(decS) + "\", EL=" + String(pos.elevation, 1) + "°";
+            } else {
+                data = "ERROR: Cannot compute satellite position";
             }
-        
-        // Formato RA: HH:MM:SS
-            int raH = (int)pos.ra;
-            int raM = (int)((pos.ra - raH) * 60);
-            int raS = (int)(((pos.ra - raH) * 60 - raM) * 60);
-        
-        // Formato DEC: sDD*MM:SS (nota: usa * no :)
-            double decAbs = fabs(pos.dec);
-            int decD = (int)decAbs;
-            int decM = (int)((decAbs - decD) * 60);
-            int decS = (int)(((decAbs - decD) * 60 - decM) * 60);
-            char decSign = (pos.dec >= 0) ? '+' : '-';
-        
-        // Comandos en formato OnStepX
-            char cmdRA[30], cmdDec[30];
-            sprintf(cmdRA, ":Sr %02d:%02d:%02d#", raH, raM, raS);
-            sprintf(cmdDec, ":Sd %c%02d*%02d:%02d#", decSign, decD, decM, decS);
-        
-        char response[80];
-        
-        // Enviar RA
-        onStep.command(cmdRA, response);
-        delay(100);
-        
-        // Enviar DEC
-        onStep.command(cmdDec, response);
-        delay(100);
-        
-        // Iniciar GOTO
-        onStep.command(":MS#", response);
-        
-        data = "GOTO: RA=" + String(raH) + "h" + String(raM) + "m" + String(raS) + "s, DEC=" + String(decSign) + String(decD) + "°" + String(decM) + "'" + String(decS) + "\", EL=" + String(pos.elevation, 1) + "°";
-    } else {
-        data = "ERROR: Cannot compute satellite position";
-    }
-    www.sendContentAndClear(data);
-    www.sendContent("");
-    return;
-}
+            www.sendContentAndClear(data);
+            www.sendContent("");
+            return;
+        }
         
         if (cmd == "track_start") {
             trackingActive = true;

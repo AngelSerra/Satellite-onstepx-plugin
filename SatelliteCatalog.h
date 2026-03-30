@@ -1,4 +1,3 @@
-// pages/sat/SatelliteCatalog.h
 #pragma once
 
 #include <Arduino.h>

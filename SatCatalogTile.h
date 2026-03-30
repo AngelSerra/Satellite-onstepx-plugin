@@ -1,4 +1,3 @@
-// pages/sat/SatCatalogTile.h
 #pragma once
 
 #include <Arduino.h>

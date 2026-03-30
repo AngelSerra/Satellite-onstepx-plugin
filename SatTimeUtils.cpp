@@ -1,8 +1,5 @@
-// pages/sat/SatTimeUtils.cpp
 #include "SatTimeUtils.h"
-#include "../htmlHeaders.h"
-
-// ==================== FUNCIONES AUXILIARES ====================
+#include "Sat.h"
 
 static bool isLeapYear(int year) {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
@@ -38,8 +35,6 @@ static unsigned long utcToTimestamp(int year, int month, int day, int hour, int 
     return timestamp;
 }
 
-// ==================== FUNCIONES PRINCIPALES ====================
-
 unsigned long getUnixTimestampFromState() {
     char reply[80] = "";
     int month, day, year;
@@ -63,8 +58,6 @@ unsigned long getUnixTimestampFromState() {
         return 0;
     }
     
-    // El mount tiene hora LOCAL como si fuera UTC
-    // Restamos 1 hora (3600 segundos) para obtener UTC real
     unsigned long mountTimestamp = utcToTimestamp(year, month, day, hour, minute, second);
     return mountTimestamp - 3600;
 }
@@ -98,7 +91,6 @@ void getUTCFromUnix(unsigned long unixTime, int &year, int &month, int &day,
 
 void getLocalTimeFromUnix(unsigned long unixTime, int &year, int &month, int &day,
                           int &hour, int &minute, int &second) {
-    // unixTime ya es UTC real, sumamos 1 hora para hora local española
     unsigned long localTimestamp = unixTime + 3600;
     getUTCFromUnix(localTimestamp, year, month, day, hour, minute, second);
 }

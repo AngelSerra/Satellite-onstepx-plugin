@@ -1,10 +1,7 @@
-// pages/sat/SatLocationTile.cpp
+// plugins/satellite/SatLocationTile.cpp
 #include "SatLocationTile.h"
-#include "../htmlHeaders.h"
-#include "../htmlMessages.h"
-#include "../KeyValue.h"
-#include "../Pages.common.h"
-#include "SatTimeUtils.h"  // ← AÑADIR ESTA LÍNEA
+#include "Sat.h"
+#include "SatTimeUtils.h"
 
 static double cachedLongitude = NAN;
 static unsigned long lastLongitudeUpdate = 0;
@@ -80,16 +77,13 @@ void satLocationTileAjax(String &data)
     data.concat("obs_lat|" + String(lat, 6) + "\n");
     data.concat("obs_lon|" + String(lon, 6) + "\n");
     
-    // Mostrar UTC y LOCAL por separado
     if (utcNow > 0) {
         int y,m,d,h,min,s;
         
-        // UTC
         getUTCFromUnix(utcNow, y,m,d,h,min,s);
         char utcBuf[32];
         snprintf(utcBuf, sizeof(utcBuf), "%04d/%02d/%02d %02d:%02d:%02d", y,m,d,h,min,s);
         
-        // Local
         getLocalTimeFromUnix(utcNow, y,m,d,h,min,s);
         char localBuf[32];
         snprintf(localBuf, sizeof(localBuf), "%04d/%02d/%02d %02d:%02d:%02d", y,m,d,h,min,s);

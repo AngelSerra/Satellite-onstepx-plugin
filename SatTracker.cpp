@@ -1,7 +1,7 @@
-// pages/sat/SatTracker.cpp
 #include "SatTracker.h"
-#include "SatLocationTile.h"    // Para getRealLongitude()
-#include "SatTimeUtils.h"       // Para getJulianDate(), getUnixTimestampFromState()
+#include "SatLocationTile.h"
+#include "SatTimeUtils.h"
+#include "../website/pages/Pages.common.h"
 #include <math.h>
 #include <string.h>
 
@@ -47,7 +47,6 @@ bool SatTracker::loadTLE(const char* line1, const char* line2) {
     _line1[sizeof(_line1) - 1] = '\0';
     _line2[sizeof(_line2) - 1] = '\0';
     
-    // Extraer NORAD ID
     char noradId[7];
     strncpy(noradId, line1 + 2, 5);
     noradId[5] = '\0';
@@ -70,13 +69,12 @@ bool SatTracker::loadTLE(const char* line1, const char* line2) {
         return false;
     }
     
-    // Inicializar SGP4
     bool initOk = _sat->init(_name, (char*)line1, (char*)line2);
     
     if (initOk) {
-        // Configurar sitio del observador (se actualizará en cada computePosition)
+
         double lat = state.latitude;
-        double lon = getRealLongitude();  // Ahora incluimos SatLocationTile.h
+        double lon = getRealLongitude();
         _sat->site(lat, lon, 0);
 
     }
@@ -97,14 +95,13 @@ SatPosition SatTracker::computePosition(double observerLat, double observerLon, 
     }
 	unsigned long now = timestamp;
     if (now == 0) {
-        now = getUnixTimestampFromState();  // ← Asegurar que esta función existe
+        now = getUnixTimestampFromState();
     }
     
-    // Configurar sitio y calcular posición
+
     _sat->site(observerLat, observerLon, observerAlt * 1000);
     _sat->findsat(timestamp);
     
-    // Obtener valores de las variables públicas
     pos.lat = _sat->satLat;
     pos.lon = _sat->satLon;
     pos.altitude = _sat->satAlt;
@@ -113,29 +110,25 @@ SatPosition SatTracker::computePosition(double observerLat, double observerLon, 
     pos.range = _sat->satDist;
     pos.period = 1440.0 / _sat->revpday;
     
-    // Calcular RA y DEC desde la posición sub-satélite
-    double jd = _getJulianDate(timestamp);  // Usar _getJulianDate, no getJulianDate
+
+    double jd = _getJulianDate(timestamp); 
     double gmst = _getGMST(jd);
     double lst = gmst + observerLon * DEG_TO_RAD;
     
-    // Longitud del satélite en radianes
+
     double satLonRad = pos.lon * DEG_TO_RAD;
     
-    // Calcular ángulo horario (HA) = LST - longitud del satélite
     double ha = lst - satLonRad;
     
-    // Declinación es igual a la latitud del sub-satélite
     pos.dec = pos.lat;
     
-    // Ascensión recta = LST - HA
     double raRad = lst - ha;
     pos.ra = raRad * RAD_TO_DEG / 15.0;
     if (pos.ra < 0) pos.ra += 24;
     if (pos.ra >= 24) pos.ra -= 24;
     
-    // Velocidad aproximada desde la altitud (órbita circular)
-    double mu = 398600.4418;  // Constante gravitacional de la Tierra km³/s²
-    double r = 6378.137 + pos.altitude;  // Distancia al centro de la Tierra en km
+    double mu = 398600.4418;
+    double r = 6378.137 + pos.altitude;
     pos.velocity = sqrt(mu / r);
     
     pos.lst = _getLocalSiderealTime(observerLon, timestamp);

@@ -1,10 +1,9 @@
-// pages/sat/SatTracker.h
+// plugins/satellite/SatTracker.h
 #ifndef SAT_TRACKER_H
 #define SAT_TRACKER_H
 
 #include <Arduino.h>
-#include "sgp4pred.h"
-#include "../Pages.common.h"
+#include "Sgp4Wrapper.h"  // En lugar de incluir sgp4pred.h directamente
 
 #ifndef DEG_TO_RAD
 #define DEG_TO_RAD (PI / 180.0)
@@ -39,7 +38,7 @@ public:
     void getCurrentTLE(char* line1, char* line2);
     
 private:
-    Sgp4* _sat;
+    Sgp4Lib::Sgp4* _sat;  // Usar el namespace
     char _name[32];
     char _line1[128];
     char _line2[128];
